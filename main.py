@@ -7,6 +7,7 @@ import bcrypt
 from flask import Flask, session
 from flask.sessions import SessionInterface
 from beaker.middleware import SessionMiddleware
+from db import get_db, init_app
 
 session_opts = {
     'session.type': 'memory',
@@ -22,59 +23,76 @@ class BeakerSessionInterface(SessionInterface):
     def save_session(self, app, session, response):
         session.save()
 
-def insertUser(username,password):
-    con = sql.connect("database.db")
-    cur = con.cursor()
-    cur.execute("INSERT INTO users (username,password) VALUES (?,?)", (username,password))
-    con.commit()
-    con.close()
-
-def retrieveUsers():
-    con = sql.connect("database.db")
-    cur = con.cursor()
-    cur.execute("SELECT username, password FROM users")
-    users = cur.fetchall()
-    con.close()
-    return users
-
-def findUser(username):
-    con = sql.connect("database.db")
-    cur = con.cursor()
-    cur.execute("select username, password from users where username=?", (username,))
-    user = cur.fetchone()
-    con.close()
-    return user
-    #return {'username': user[0]
-
 app = Flask(__name__)
+app.config.from_mapping(
+    SECRET_KEY='dev',
+    DATABASE='database.db',
+)
+init_app(app) # initialize the database to this app
+
+def insertUser(username,password,email,realname,parentid):
+    mdb = get_db()
+    mdb.execute("INSERT INTO users (username, password, email, realname, parentid) VALUES (?,?,?,?,?)", (username,password,email,realname,parentid))
+    mdb.commit()
+
+def findUser(**kwargs):
+    mdb = get_db()
+    if 'username' in kwargs:
+        user = mdb.execute("select id, username, password, parentid, realname from users where username=?", (kwargs['username'],)).fetchone()
+    elif 'id' in kwargs:
+        user = mdb.execute("select id, username, password, parentid, realname from users where id=?", (kwargs['id'],)).fetchone()
+    else:
+        return None
+    if user is None:
+        return None
+    return {"id":int(user[0]), "username":user[1], "password":user[2], "parent":int(user[3]), "realname":user[4]}
+
+def check_params(r, *args):
+    for param in args:
+        if param not in r:
+            return False
+    return True
+
+def logged_in():
+    if 'loggedin' not in session or not session['loggedin']:
+        return False
+    return True
 
 @app.route('/login', methods=['POST'])
 def login():
-    if 'username' not in request.form and 'password' not in request.form:
+    if not check_params(request.form, 'username', 'password'):
         return jsonify({'error':"incomplete-params"})
     username = request.form['username']
     password = request.form['password']
-
-    user = findUser(username)
-    db_pw = user[1].decode('utf-8')
+    
+    user = findUser(username=username)
     if user is None:
         return jsonify({'error':"bad-username"})
     
-    if bcrypt.hashpw(password.encode('utf-8'), user[1]) == user[1]:
+    if bcrypt.hashpw(password.encode('utf-8'), user['password']) == user['password']:
         session['loggedin'] = True
-        return jsonify({'error':""})
+        session['userid'] = user['id']
+        return jsonify({'error':"", 'userid':user['id']})
     else:
         return jsonify({'error':"bad-login"})
 
 @app.route('/register', methods=['POST'])
 def register():
-    if request.method=='POST':
+    if not check_params(request.form, 'username', 'password', 'email', 'realname', 'parentid'):
        username = request.form['username']
        password = request.form['password']
-       if findUser(username) is not None:
+       email = request.form['email']
+       realname = request.form['realname']
+       parentid = 0
+       # if we're creating an account but we're already logged in,
+       # then treat the account we're making as a child account
+       # (so the parent is the current user)
+       if logged_in():
+           parentid = session['userid']
+       
+       if findUser(username=username) is not None:
            return jsonify({'error':"username-taken"})
-       insertUser(username, bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()))
-       users = retrieveUsers()
+       insertUser(username, bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()), email, realname, parentid)
        return jsonify({'error':""})
     else:
        return jsonify({'error':True, 'errmsg': "Register only accepts a POST."})
