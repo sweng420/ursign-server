@@ -47,6 +47,17 @@ def findUser(**kwargs):
         return None
     return {"id":int(user[0]), "username":user[1], "password":user[2], "parent":int(user[3]), "realname":user[4]}
 
+def findUserCollections(uid):
+    #print(session)
+    mdb = get_db()
+    collections = mdb.execute("select collections.id, title, xmldata from collection_owners inner join collections on collection_owners.cid = collections.id where uid=?", (uid,)).fetchall()
+    if collections is not None:
+        ret = []
+        for coll in collections:
+            ret.append({"cid":int(coll[0]), "title":coll[1], "xmldata":coll[2]})
+        return ret
+    return None
+
 def check_params(r, *args):
     for param in args:
         if param not in r:
@@ -57,6 +68,10 @@ def logged_in():
     if 'loggedin' not in session or not session['loggedin']:
         return False
     return True
+
+@app.route('/loginform', methods=['GET'])
+def loginform():
+    return "<form method='POST' action='/login'><input type='text' name='username'><input type='password' name='password'><input type='submit'></form>"
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -69,12 +84,22 @@ def login():
     if user is None:
         return jsonify({'error':"bad-username"})
     
-    if bcrypt.hashpw(password.encode('utf-8'), user['password']) == user['password']:
+    if bcrypt.hashpw(password.encode('utf-8'), user['password'].encode('utf-8')) == user['password'].encode('utf-8'):
         session['loggedin'] = True
         session['userid'] = user['id']
         return jsonify({'error':"", 'userid':user['id']})
     else:
         return jsonify({'error':"bad-login"})
+
+@app.route('/my_collections', methods=['POST', 'GET'])
+def my_collections():
+    print(session)
+    if not logged_in():
+        return jsonify({'error':"restricted-login"})
+    cs = findUserCollections(session['userid'])
+    if cs is None:
+        return jsonify({'error':"", 'collections':[]})
+    return jsonify({'error':"", 'collections':cs})
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -100,4 +125,4 @@ def register():
 if __name__ == '__main__':
     app.wsgi_app = SessionMiddleware(app.wsgi_app, session_opts)
     app.session_interface = BeakerSessionInterface()
-    app.run(debug=False, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
