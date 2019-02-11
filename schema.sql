@@ -25,3 +25,11 @@ create table collection_owners (
        foreign key(uid) references users(id),
        foreign key(cid) references collections(id)
 );
+
+insert into users (username, password, email, realname, born, gender, parentid) values ('iyra', '$2b$12$FHffeKKEQNusvKMIfnWiI.pdKQGCeRVVUy91aFGOXItMecW6Yrzqu', 'isgb500@york.ac.uk', 'Iyra', 1996, 'male', 0); -- password is 'test'
+
+insert into collections (title, xmldata) values ('Sign Language Alphabet', '<some xml data>');
+
+insert into collections (title, xmldata) values ('Common Phrases', '<other data>');
+
+insert into collection_owners (uid, cid) values (1,1); -- iyra has the Alphabet collection
