@@ -47,6 +47,23 @@ def findUser(**kwargs):
         return None
     return {"id":int(user[0]), "username":user[1], "password":user[2], "parent":int(user[3]), "realname":user[4]}
 
+def findChildren(uid):
+    mdb = get_db()
+    
+    # get the IDs of this user's children
+    children = mdb.execute("select id from users where parentid=?", (uid,)).fetchall()
+    if children is None:
+        return None
+    ret = []
+
+    # look up each child in the database and return data about them
+    for child in children:
+        c_userdata = findUser(id=child[0])
+        if c_userdata is None:
+            return ret
+        ret.append(c_userdata)
+    return ret
+
 def findUserCollections(uid):
     #print(session)
     mdb = get_db()
@@ -57,6 +74,9 @@ def findUserCollections(uid):
             ret.append({"cid":int(coll[0]), "title":coll[1], "xmldata":coll[2]})
         return ret
     return None
+
+def findUserChildCollections(uid):
+    pass
 
 def check_params(r, *args):
     for param in args:
@@ -91,7 +111,11 @@ def login():
     else:
         return jsonify({'error':"bad-login"})
 
-@app.route('/my_collections', methods=['POST', 'GET'])
+@app.route('/profile', methods=['GET'])
+def profile():
+    pass
+
+@app.route('/my_collections', methods=['GET'])
 def my_collections():
     print(session)
     if not logged_in():
