@@ -7,6 +7,7 @@ drop table if exists users;
     realname text not null,
     born integer,
     gender text,
+    balance integer,
     parentid integer not null -- a parent id > 0 means that it's a child account
 );
 
@@ -14,7 +15,8 @@ drop table if exists collections;
 create table collections (
        id integer primary key autoincrement,
        title text not null,
-       xmldata text not null
+       xmldata text not null,
+       prize int
 );
 
 -- table to associate collections with users (i.e to show who owns which collections)
