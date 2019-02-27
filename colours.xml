@@ -1,0 +1,91 @@
+<id>
+	<page>  <!--red--!>
+		<multimedia>
+			<type>
+				Image
+      </type>
+
+      <filelocation>
+        Colours_media/red.png
+      </filelocation>
+		
+      <meta>		
+      </meta>
+		</multimedia>
+    
+		<multimedia>
+      <type>
+        Text
+      </type>
+
+      <filelocation>
+        red
+      </filelocation>
+
+      <meta>
+      </meta>
+  
+		</multimedia>
+
+  </page>
+  
+  	<page>  <!--green--!>
+		<multimedia>
+			<type>
+				Image
+      </type>
+
+      <filelocation>
+        Colours_media/green.png
+      </filelocation>
+		
+      <meta>		
+      </meta>
+		</multimedia>
+    
+		<multimedia>
+      <type>
+        Text
+      </type>
+
+      <filelocation>
+        green
+      </filelocation>
+
+      <meta>
+      </meta>
+  
+		</multimedia>
+
+  </page>
+  
+  	<page>  <!--blue--!>
+		<multimedia>
+			<type>
+				Image
+      </type>
+
+      <filelocation>
+        Colours_media/blue.png
+      </filelocation>
+		
+      <meta>		
+      </meta>
+		</multimedia>
+    
+		<multimedia>
+      <type>
+        Text
+      </type>
+
+      <filelocation>
+        blue
+      </filelocation>
+
+      <meta>
+      </meta>
+  
+		</multimedia>
+
+  </page>
+</id>
