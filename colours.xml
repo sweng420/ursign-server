@@ -1,91 +1,73 @@
 <id>
-	<page>  <!--red--!>
+	<page>  
 		<multimedia>
 			<type>
 				Image
-      </type>
-
-      <filelocation>
-        Colours_media/red.png
-      </filelocation>
-		
-      <meta>		
-      </meta>
+			</type>
+			<filelocation>
+				Colours_media/red.png
+			</filelocation>
+			<meta>		
+			</meta>
 		</multimedia>
     
 		<multimedia>
-      <type>
-        Text
-      </type>
-
-      <filelocation>
-        red
-      </filelocation>
-
-      <meta>
-      </meta>
-  
+			<type>
+				Text
+			</type>
+			<filelocation>
+				red
+			</filelocation>
+			<meta>
+			</meta>
 		</multimedia>
-
-  </page>
+	</page>
   
-  	<page>  <!--green--!>
+  	<page>  
 		<multimedia>
 			<type>
 				Image
-      </type>
-
-      <filelocation>
-        Colours_media/green.png
-      </filelocation>
-		
-      <meta>		
-      </meta>
+			</type>
+			 <filelocation>
+				 Colours_media/green.png
+			 </filelocation>
+			 <meta>	
+			 </meta>
 		</multimedia>
     
 		<multimedia>
-      <type>
-        Text
-      </type>
-
-      <filelocation>
-        green
-      </filelocation>
-
-      <meta>
-      </meta>
-  
+			<type>
+				Text
+			</type>
+			<filelocation>
+				green
+			</filelocation>
+			<meta>
+			</meta>
 		</multimedia>
-
-  </page>
+	</page>
   
-  	<page>  <!--blue--!>
+  	<page>  
 		<multimedia>
 			<type>
 				Image
-      </type>
-
-      <filelocation>
-        Colours_media/blue.png
-      </filelocation>
-		
-      <meta>		
-      </meta>
+			</type>
+			<filelocation>
+				Colours_media/blue.png
+			</filelocation>
+			<meta>
+			</meta>
 		</multimedia>
     
 		<multimedia>
-      <type>
-        Text
-      </type>
-
-      <filelocation>
-        blue
-      </filelocation>
-
-      <meta>
-      </meta>
-  
+			<type>
+				Text
+			</type>
+			<filelocation>
+				blue
+			</filelocation>
+			<meta>
+			</meta>
 		</multimedia>
-
   </page>
 </id>
