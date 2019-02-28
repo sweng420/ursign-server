@@ -25,23 +25,15 @@
   
   	<page>  <!--green-->
 		<multimedia>
-			<type>
-				Image
-			</type>
-			 <filelocation>
-				 Colours_media/green.png
-			 </filelocation>
+			<type>Image</type>
+			 <filelocation>Colours_media/green.png</filelocation>
 			 <meta>	
 			 </meta>
 		</multimedia>
     
 		<multimedia>
-			<type>
-				Text
-			</type>
-			<filelocation>
-				green
-			</filelocation>
+			<type>Text</type>
+			<filelocation>green</filelocation>
 			<meta>
 			</meta>
 		</multimedia>
@@ -49,23 +41,15 @@
   
   	<page>  <!--blue-->
 		<multimedia>
-			<type>
-				Image
-			</type>
-			<filelocation>
-				Colours_media/blue.png
-			</filelocation>
+			<type>Image</type>
+			<filelocation>Colours_media/blue.png</filelocation>
 			<meta>
 			</meta>
 		</multimedia>
     
 		<multimedia>
-			<type>
-				Text
-			</type>
-			<filelocation>
-				blue
-			</filelocation>
+			<type>Text</type>
+			<filelocation>blue</filelocation>
 			<meta>
 			</meta>
 		</multimedia>
