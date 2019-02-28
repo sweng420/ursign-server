@@ -1,5 +1,5 @@
-<id>
-	<page>  
+<id value = "2">
+	<page>  <!--red-->
 		<multimedia>
 			<type>
 				Image
@@ -23,7 +23,7 @@
 		</multimedia>
 	</page>
   
-  	<page>  
+  	<page>  <!--green-->
 		<multimedia>
 			<type>
 				Image
@@ -47,7 +47,7 @@
 		</multimedia>
 	</page>
   
-  	<page>  
+  	<page>  <!--blue-->
 		<multimedia>
 			<type>
 				Image
