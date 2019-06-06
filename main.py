@@ -3,11 +3,14 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import jsonify # for returning json from requests
-import bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, session
 from flask.sessions import SessionInterface
 from beaker.middleware import SessionMiddleware
 from db import get_db, init_app
+from datetime import date
+from pathlib import Path
+
 
 session_opts = {
     'session.type': 'memory',
@@ -30,22 +33,41 @@ app.config.from_mapping(
 )
 init_app(app) # initialize the database to this app
 
-def insertUser(username,password,email,realname,parentid):
+def insertUser(username,password,email,realname,parentid,born,gender):
     mdb = get_db()
-    mdb.execute("INSERT INTO users (username, password, email, realname, parentid) VALUES (?,?,?,?,?)", (username,password,email,realname,parentid))
+    #print("value ", date.today().year - int(age), " and ", int(age))
+    mdb.execute("INSERT INTO users (username, password, email, realname, parentid, born, gender, credits) VALUES (?,?,?,?,?,?,?,?)", (username,password,email,realname,parentid,born, gender, 0))
     mdb.commit()
 
 def findUser(**kwargs):
     mdb = get_db()
     if 'username' in kwargs:
-        user = mdb.execute("select id, username, password, parentid, realname from users where username=?", (kwargs['username'],)).fetchone()
+        user = mdb.execute("select id, username, password, parentid, realname, email, born, credits from users where username=?", (kwargs['username'],)).fetchone()
     elif 'id' in kwargs:
-        user = mdb.execute("select id, username, password, parentid, realname from users where id=?", (kwargs['id'],)).fetchone()
+        user = mdb.execute("select id, username, password, parentid, realname, email, born, credits from users where id=?", (kwargs['id'],)).fetchone()
     else:
         return None
     if user is None:
         return None
-    return {"id":int(user[0]), "username":user[1], "password":user[2], "parent":int(user[3]), "realname":user[4]}
+    colle = findUserCollections(int(user[0]))
+    
+    return {"id":int(user[0]), "username":user[1], "password":user[2], "parent":int(user[3]), "realname":user[4], "email":user[5], "born":user[6], "collections":colle, "credits":int(user[7])}
+
+def getCredits(id):
+    u = findUser(id=id)
+    return u['credits']
+
+def updateCredits(id, n):
+    mdb = get_db()
+    mdb.execute("update users set credits=? where id=?", (getCredits(id)+n, id))
+    mdb.commit()
+
+def updateUser(id, username, password, realname, email, born):
+    mdb = get_db()
+    pw = generate_password_hash(password)
+    print("username: ", username)
+    mdb.execute("update users set username=?, password=?, realname=?, email=?, born=? where id=?", (username, pw, realname, email, born, id))
+    mdb.commit()
 
 def findChildren(uid):
     mdb = get_db()
@@ -64,6 +86,15 @@ def findChildren(uid):
         ret.append(c_userdata)
     return ret
 
+def hasChild(uid, cid):
+    mdb = get_db()
+
+    child = mdb.execute("select id from users where id=? and parentid=?", (cid, uid)).fetchone()
+
+    if child is None:
+        return False
+    return True
+
 def findUserCollections(uid):
     #print(session)
     mdb = get_db()
@@ -71,7 +102,10 @@ def findUserCollections(uid):
     if collections is not None:
         ret = []
         for coll in collections:
-            ret.append({"cid":int(coll[0]), "title":coll[1], "xmldata":coll[2]})
+            xml_file = Path(coll[2])
+            if xml_file.is_file():
+                with open(xml_file, 'r') as f:
+                    ret.append({"cid":int(coll[0]), "title":coll[1], "xmldata":f.read()})
         return ret
     return None
 
@@ -103,13 +137,16 @@ def login():
     user = findUser(username=username)
     if user is None:
         return jsonify({'error':"bad-username"})
-    
-    if bcrypt.hashpw(password.encode('utf-8'), user['password'].encode('utf-8')) == user['password'].encode('utf-8'):
+
+    print(user['password'])
+    print(password)
+    if check_password_hash(user['password'], password):
         session['loggedin'] = True
         session['userid'] = user['id']
         return jsonify({'error':"", 'userid':user['id']})
     else:
         return jsonify({'error':"bad-login"})
+
 
 @app.route('/profile', methods=['GET'])
 def profile():
@@ -127,26 +164,82 @@ def my_collections():
 
 @app.route('/register', methods=['POST'])
 def register():
-    if not check_params(request.form, 'username', 'password', 'email', 'realname', 'parentid'):
+    if check_params(request.form, 'username', 'password', 'email', 'realname', 'parentid', 'born', 'gender'):
        username = request.form['username']
        password = request.form['password']
        email = request.form['email']
        realname = request.form['realname']
-       parentid = 0
+       born = request.form['born']
+       gender = request.form['gender']
+       parentid = int(request.form['parentid'])
        # if we're creating an account but we're already logged in,
        # then treat the account we're making as a child account
        # (so the parent is the current user)
-       if logged_in():
-           parentid = session['userid']
+       #if logged_in():
+       #    parentid = session['userid']
        
        if findUser(username=username) is not None:
            return jsonify({'error':"username-taken"})
-       insertUser(username, bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()), email, realname, parentid)
+       insertUser(username, generate_password_hash(request.form['password']), email, realname, parentid, born, gender)
        return jsonify({'error':""})
     else:
-       return jsonify({'error':True, 'errmsg': "Register only accepts a POST."})
+       return jsonify({'error':"incomplete-params"})
+
+@app.route("/myinfo", methods=["POST"])
+def my_info():
+    if not logged_in():
+        return jsonify({'error':'unauthorised'})
+    else:
+        me =  findUser(id=session["userid"])
+        return jsonify({"user":me, "children": findChildren(session["userid"]), "error":""})
+
+@app.route("/updateinfo", methods=["POST"])
+def update_info():
+    if not logged_in():
+        return jsonify({'error':'unauthorized'})
+    me = findUser(id=session['userid'])
+    if me is not None:
+        if not check_params(request.form, 'username', 'password', 'realname', 'email', 'born'):
+            return jsonify({'error':"incomplete-params"})
+        updateUser(session['userid'], request.form['username'], request.form['password'], request.form['realname'], request.form['email'], request.form['born'])
+        return jsonify({'error':""})
+    return jsonify({'error':'bad-session'})
+
+@app.route('/updatecredits', methods=['POST'])
+def update_credits():
+    if not logged_in():
+        return jsonify({'error':'unauthorized'})
+    me = findUser(id=session['userid'])
+    if me is not None:
+        if not check_params(request.form, 'ncredits'):
+            return jsonify({'error':"incomplete-params"})
+        try:
+            ncredits = int(request.form['ncredits'])
+            updateCredits(session['userid'], ncredits)
+            return jsonify({'error':"", 'credits':ncredits})
+        except ValueError:
+            return jsonify({'error':'incomplete-params'})
+
+@app.route("/updatestudentinfo", methods=["POST"])
+def update_student_info():
+    if not logged_in():
+        return jsonify({'error':'unauthorized'})
+    me = findUser(id=session['userid'])
+    if me is not None:
+        if not check_params(request.form, 'username', 'password', 'realname', 'email', 'born', 'studentid'):
+            return jsonify({'error':"incomplete-params"})
+        try:
+             if not hasChild(session['userid'], int(request.form['studentid'])):
+                 return jsonify({'error':"not-your-child"})
+             updateUser(int(request.form['studentid']), request.form['username'],
+                        request.form['password'], request.form['realname'], request.form['email'], request.form['born'])
+        except ValueError:
+            return jsonify({'error':"incomplete-params"})
+        return jsonify({'error':""})
+    return jsonify({'error':'bad-session'})
 
 if __name__ == '__main__':
     app.wsgi_app = SessionMiddleware(app.wsgi_app, session_opts)
     app.session_interface = BeakerSessionInterface()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')#, ssl_context='adhoc')
+

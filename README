@@ -4,7 +4,9 @@ The code to run the UrSign backend, managing all user data.
 CONFIGURATION
 You need Python 3 (with SQLite3 support) and flask, bcrypt and beaker (all from PyPI).
 
-USAGE
+USAGE/TESTING
+Instructions on how to test the server's basic features are shown below. For detailed unit testing
+see the ursign-server-test repository.
 
 $ sqlite3 database.db < schema.sql
 $ python main.py
